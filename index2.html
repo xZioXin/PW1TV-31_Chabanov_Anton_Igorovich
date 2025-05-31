@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор мазуту</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; text-align: center; }
+        .calculator { background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        .results { margin-top: 20px; background-color: #e8f4fc; padding: 15px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Калькулятор перерахунку мазуту</h1>
+    <div class="calculator">
+        <div class="input-group">
+            <label for="C_comb">Вуглець (C) горючої маси, %:</label>
+            <input type="number" id="C_comb" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="H_comb">Водень (H) горючої маси, %:</label>
+            <input type="number" id="H_comb" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="O_comb">Кисень (O) горючої маси, %:</label>
+            <input type="number" id="O_comb" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="S_comb">Сірка (S) горючої маси, %:</label>
+            <input type="number" id="S_comb" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Q_comb">Нижча теплота згоряння горючої маси, МДж/кг:</label>
+            <input type="number" id="Q_comb" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Wp">Вологість робочої маси, %:</label>
+            <input type="number" id="Wp" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Ad">Зольність сухої маси, %:</label>
+            <input type="number" id="Ad" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="V">Вміст ванадію (V), мг/кг:</label>
+            <input type="number" id="V" step="0.01">
+        </div>
+        
+        <button onclick="calculateFuelOil()">Розрахувати</button>
+        
+        <div class="results" id="results" style="display: none;">
+            <h3>Результати для робочої маси:</h3>
+            <table>
+                <tr>
+                    <th>Компонент</th>
+                    <th>Значення, %</th>
+                </tr>
+                <tr>
+                    <td>C<sup>p</sup></td>
+                    <td id="Cp_result"></td>
+                </tr>
+                <tr>
+                    <td>H<sup>p</sup></td>
+                    <td id="Hp_result"></td>
+                </tr>
+                <tr>
+                    <td>O<sup>p</sup></td>
+                    <td id="Op_result"></td>
+                </tr>
+                <tr>
+                    <td>S<sup>p</sup></td>
+                    <td id="Sp_result"></td>
+                </tr>
+                <tr>
+                    <td>Нижча теплота згоряння, МДж/кг</td>
+                    <td id="Qp_result"></td>
+                </tr>
+                <tr>
+                    <td>Зольність робочої маси, %</td>
+                    <td id="Ap_result"></td>
+                </tr>
+                <tr>
+                    <td>Вміст ванадію, мг/кг</td>
+                    <td id="V_result"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function calculateFuelOil() {
+            const C_comb = parseFloat(document.getElementById('C_comb').value);
+            const H_comb = parseFloat(document.getElementById('H_comb').value);
+            const O_comb = parseFloat(document.getElementById('O_comb').value);
+            const S_comb = parseFloat(document.getElementById('S_comb').value);
+            const Q_comb = parseFloat(document.getElementById('Q_comb').value);
+            const Wp = parseFloat(document.getElementById('Wp').value);
+            const Ad = parseFloat(document.getElementById('Ad').value);
+            const V = parseFloat(document.getElementById('V').value);
+            
+            const sum_comb = C_comb + H_comb + O_comb + S_comb;
+            if (Math.abs(sum_comb - 100) > 0.1) {
+                alert(`Сума компонентів горючої маси повинна бути 100%. Поточна сума: ${sum_comb.toFixed(2)}%`);
+                return;
+            }
+            
+            const dry_factor = (100 - Wp) / 100;
+            const comb_factor = (100 - Wp - Ad * dry_factor) / 100;
+            
+            const Cp = C_comb * comb_factor;
+            const Hp = H_comb * comb_factor;
+            const Op = O_comb * comb_factor;
+            const Sp = S_comb * comb_factor;
+            const Ap = Ad * dry_factor;
+            const Vp = V * dry_factor;
+            const Qp = Q_comb * comb_factor;
+            
+            document.getElementById('Cp_result').textContent = Cp.toFixed(2);
+            document.getElementById('Hp_result').textContent = Hp.toFixed(2);
+            document.getElementById('Op_result').textContent = Op.toFixed(2);
+            document.getElementById('Sp_result').textContent = Sp.toFixed(2);
+            document.getElementById('Qp_result').textContent = Qp.toFixed(2);
+            document.getElementById('Ap_result').textContent = Ap.toFixed(2);
+            document.getElementById('V_result').textContent = Vp.toFixed(2);
+            
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

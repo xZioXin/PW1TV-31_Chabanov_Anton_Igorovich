@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор палива 1</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; text-align: center; }
+        .calculator { background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        .results { margin-top: 20px; background-color: #e8f4fc; padding: 15px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Калькулятор складу палива та теплоти згоряння</h1>
+    <div class="calculator">
+        <div class="input-group">
+            <label for="Cp">Вуглець (C<sup>p</sup>), %:</label>
+            <input type="number" id="Cp" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Hp">Водень (H<sup>p</sup>), %:</label>
+            <input type="number" id="Hp" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Sp">Сірка (S<sup>p</sup>), %:</label>
+            <input type="number" id="Sp" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Np">Азот (N<sup>p</sup>), %:</label>
+            <input type="number" id="Np" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Op">Кисень (O<sup>p</sup>), %:</label>
+            <input type="number" id="Op" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Wp">Вологість (W<sup>p</sup>), %:</label>
+            <input type="number" id="Wp" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="Ap">Зольність (A<sup>p</sup>), %:</label>
+            <input type="number" id="Ap" step="0.01">
+        </div>
+        
+        <button onclick="calculate()">Розрахувати</button>
+        
+        <div class="results" id="results" style="display: none;">
+            <h3>Результати:</h3>
+            <table>
+                <tr>
+                    <th>Параметр</th>
+                    <th>Робоча маса</th>
+                    <th>Суха маса</th>
+                    <th>Горюча маса</th>
+                </tr>
+                <tr>
+                    <td>C, %</td>
+                    <td id="C_work"></td>
+                    <td id="C_dry"></td>
+                    <td id="C_comb"></td>
+                </tr>
+                <tr>
+                    <td>H, %</td>
+                    <td id="H_work"></td>
+                    <td id="H_dry"></td>
+                    <td id="H_comb"></td>
+                </tr>
+                <tr>
+                    <td>S, %</td>
+                    <td id="S_work"></td>
+                    <td id="S_dry"></td>
+                    <td id="S_comb"></td>
+                </tr>
+                <tr>
+                    <td>N, %</td>
+                    <td id="N_work"></td>
+                    <td id="N_dry"></td>
+                    <td id="N_comb"></td>
+                </tr>
+                <tr>
+                    <td>O, %</td>
+                    <td id="O_work"></td>
+                    <td id="O_dry"></td>
+                    <td id="O_comb"></td>
+                </tr>
+                <tr>
+                    <td>Нижча теплота згоряння, МДж/кг</td>
+                    <td id="Q_work"></td>
+                    <td id="Q_dry"></td>
+                    <td id="Q_comb"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const Cp = parseFloat(document.getElementById('Cp').value);
+            const Hp = parseFloat(document.getElementById('Hp').value);
+            const Sp = parseFloat(document.getElementById('Sp').value);
+            const Np = parseFloat(document.getElementById('Np').value);
+            const Op = parseFloat(document.getElementById('Op').value);
+            const Wp = parseFloat(document.getElementById('Wp').value);
+            const Ap = parseFloat(document.getElementById('Ap').value);
+            
+            const sum = Cp + Hp + Sp + Np + Op + Wp + Ap;
+            if (Math.abs(sum - 100) > 0.1) {
+                alert(`Сума компонентів повинна бути 100%. Поточна сума: ${sum.toFixed(2)}%`);
+                return;
+            }
+            
+            const dry_factor = 100 / (100 - Wp);
+            const Cd = Cp * dry_factor;
+            const Hd = Hp * dry_factor;
+            const Sd = Sp * dry_factor;
+            const Nd = Np * dry_factor;
+            const Od = Op * dry_factor;
+            const Ad = Ap * dry_factor;
+            
+            const comb_factor = 100 / (100 - Wp - Ap);
+            const Cc = Cp * comb_factor;
+            const Hc = Hp * comb_factor;
+            const Sc = Sp * comb_factor;
+            const Nc = Np * comb_factor;
+            const Oc = Op * comb_factor;
+            
+            const Qp = 0.339 * Cp + 1.030 * Hp - 0.1088 * (Op - Sp) - 0.025 * Wp;
+            const Qd = Qp * dry_factor;
+            const Qc = Qp * comb_factor;
+            
+            document.getElementById('C_work').textContent = Cp.toFixed(2);
+            document.getElementById('H_work').textContent = Hp.toFixed(2);
+            document.getElementById('S_work').textContent = Sp.toFixed(2);
+            document.getElementById('N_work').textContent = Np.toFixed(2);
+            document.getElementById('O_work').textContent = Op.toFixed(2);
+            
+            document.getElementById('C_dry').textContent = Cd.toFixed(2);
+            document.getElementById('H_dry').textContent = Hd.toFixed(2);
+            document.getElementById('S_dry').textContent = Sd.toFixed(2);
+            document.getElementById('N_dry').textContent = Nd.toFixed(2);
+            document.getElementById('O_dry').textContent = Od.toFixed(2);
+            
+            document.getElementById('C_comb').textContent = Cc.toFixed(2);
+            document.getElementById('H_comb').textContent = Hc.toFixed(2);
+            document.getElementById('S_comb').textContent = Sc.toFixed(2);
+            document.getElementById('N_comb').textContent = Nc.toFixed(2);
+            document.getElementById('O_comb').textContent = Oc.toFixed(2);
+            
+            document.getElementById('Q_work').textContent = Qp.toFixed(2);
+            document.getElementById('Q_dry').textContent = Qd.toFixed(2);
+            document.getElementById('Q_comb').textContent = Qc.toFixed(2);
+            
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
